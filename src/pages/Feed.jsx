@@ -1,18 +1,35 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSocial } from '../context/SocialContext';
 import { useAuth } from '../context/AuthContext';
 import { getImageUrl } from '../services/api';
-import { Heart, MessageSquare, Film, UserPlus } from 'lucide-react';
+import { Heart, MessageSquare, Film, UserPlus, Search, User } from 'lucide-react';
 import './Feed.css';
 
 const Feed = () => {
-  const { activities, fetchFeed, loading, following } = useSocial();
+  const { activities, fetchFeed, loading, following, searchUsers, followUser, createDummyUser } = useSocial();
   const { currentUser } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     fetchFeed();
   }, [currentUser]);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    setIsSearching(true);
+    const results = await searchUsers(searchTerm);
+    setSearchResults(results);
+    setIsSearching(false);
+  };
+
+  const handleCreateDummy = async () => {
+    const msg = await createDummyUser();
+    alert(msg);
+  };
 
   if (!currentUser) {
     return (
@@ -23,27 +40,62 @@ const Feed = () => {
     );
   }
 
-  if (following.length === 0) {
-    return (
-      <div className="feed-page container flex-center" style={{height: '80vh', flexDirection: 'column'}}>
-        <div className="empty-feed-icon">
-          <UserPlus size={48} />
-        </div>
-        <h2>Your feed is empty</h2>
-        <p className="text-secondary">Follow other users to see what they are watching and liking.</p>
-        <Link to="/search" className="btn-primary" style={{marginTop: '1rem'}}>Find Friends</Link>
-      </div>
-    );
-  }
-
   return (
     <div className="feed-page container">
-      <h1 className="page-title">Activity Feed</h1>
+      <div className="feed-header-main">
+        <h1 className="page-title">Activity Feed</h1>
+        <button onClick={handleCreateDummy} className="btn-secondary btn-sm">
+          + Add Test User
+        </button>
+      </div>
+
+      {/* User Search */}
+      <div className="user-search-section glass-panel">
+        <form onSubmit={handleSearch} className="search-form">
+          <input
+            type="text"
+            placeholder="Find friends..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="user-search-input"
+          />
+          <button type="submit" className="btn-primary">
+            <Search size={18} />
+          </button>
+        </form>
+
+        {searchResults.length > 0 && (
+          <div className="user-results">
+            {searchResults.map(user => (
+              <div key={user.uid} className="user-result-item">
+                <div className="user-info-small">
+                  <div className="user-avatar-small">
+                    <User size={16} />
+                  </div>
+                  <Link to={`/profile/${user.uid}`} className="text-white hover-underline" style={{textDecoration: 'none'}}>
+                    {user.displayName}
+                  </Link>
+                </div>
+                <button 
+                  className="btn-primary btn-sm"
+                  onClick={() => followUser(user.uid, user.displayName, user.photoURL)}
+                  disabled={following.some(f => f.uid === user.uid) || user.uid === currentUser.uid}
+                >
+                  {following.some(f => f.uid === user.uid) ? 'Following' : 'Follow'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       
       {loading ? (
         <div className="flex-center" style={{marginTop: '2rem'}}>Loading updates...</div>
       ) : (
         <div className="feed-list">
+          {activities.length === 0 && following.length > 0 && (
+             <p className="text-center text-secondary">No recent activity from friends.</p>
+          )}
           {activities.map((activity) => (
             <div key={activity.id} className="feed-item glass-panel">
               <div className="feed-header">
@@ -56,7 +108,9 @@ const Feed = () => {
                     </div>
                   )}
                   <div className="feed-user-details">
-                    <span className="feed-username">{activity.userName}</span>
+                    <Link to={`/profile/${activity.userId}`} className="feed-username hover-underline" style={{color: 'white', textDecoration: 'none'}}>
+                      {activity.userName}
+                    </Link>
                     <span className="feed-action">
                       {activity.type === 'watch' && 'watched'}
                       {activity.type === 'like' && 'liked'}

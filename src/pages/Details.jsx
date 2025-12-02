@@ -6,6 +6,19 @@ import { useList } from '../context/ListContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocial } from '../context/SocialContext';
 import AuthModal from '../components/AuthModal';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  addDoc, 
+  serverTimestamp,
+  updateDoc,
+  doc,
+  arrayUnion
+} from 'firebase/firestore';
+import { db } from '../firebase';
 import './Details.css';
 
 const Details = () => {
@@ -14,25 +27,62 @@ const Details = () => {
   const [loading, setLoading] = useState(true);
   const { addToWatchlist, removeFromWatchlist, isInWatchlist, addToWatched, removeFromWatched, isInWatched } = useList();
   const { currentUser } = useAuth();
+  const { toggleGlobalLike, getGlobalLikes, logActivity } = useSocial();
   
-  const [comments, setComments] = useState([
-    { id: 1, user: "Alex", text: "This show is absolutely mind-blowing! The 80s vibes are perfect.", time: "2h ago", likes: 24, replies: [] },
-    { id: 2, user: "Sarah", text: "Can't wait for the next season!", time: "5h ago", likes: 12, replies: [] },
-  ]);
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [showTrailer, setShowTrailer] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const { toggleGlobalLike, getGlobalLikes } = useSocial();
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      try {
+        const data = await getDetails(mediaType || 'movie', id);
+        setContent(data);
+      } catch (error) {
+        console.error("Failed to fetch details", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchDetails();
+    }
+  }, [mediaType, id]);
+
+  // Real-time comments listener
+  useEffect(() => {
+    if (!content?.id) return;
+
+    const q = query(
+      collection(db, 'comments'),
+      where('contentId', '==', content.id.toString()),
+      orderBy('timestamp', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const commentsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setComments(commentsData);
+    });
+
+    return () => unsubscribe();
+  }, [content?.id]);
 
   useEffect(() => {
     const fetchLikes = async () => {
       if (content) {
         const count = await getGlobalLikes(content.id);
         setLikeCount(count);
-        // Check if user liked (optimization: this should ideally come from context or user data)
-        // For now we rely on local toggle state or re-fetching user data if needed
       }
     };
     fetchLikes();
@@ -44,15 +94,13 @@ const Details = () => {
       return;
     }
     
-    // Optimistic update
     const newLikedState = !isLiked;
     setIsLiked(newLikedState);
     setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
 
-    const success = await toggleGlobalLike(content.id, title, content.poster_path);
+    const success = await toggleGlobalLike(content.id, content.title || content.name, content.poster_path);
     if (!success && newLikedState) {
-      // Revert if failed (or if it was an unlike action that returned false)
-       // logic depends on toggleGlobalLike return value
+       // Revert logic could go here
     }
   };
 
@@ -73,7 +121,7 @@ const Details = () => {
     }
   };
 
-  const handleAddComment = (e) => {
+  const handleAddComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
     
@@ -82,39 +130,44 @@ const Details = () => {
       return;
     }
     
-    setComments([
-      { 
-        id: Date.now(), 
-        user: currentUser.displayName || "User", 
-        text: newComment, 
-        time: "Just now", 
+    try {
+      await addDoc(collection(db, 'comments'), {
+        contentId: content.id.toString(),
+        userId: currentUser.uid,
+        user: currentUser.displayName || "User",
+        userPhoto: currentUser.photoURL,
+        text: newComment,
+        timestamp: serverTimestamp(),
         likes: 0,
         replies: []
-      },
-      ...comments
-    ]);
-    setNewComment("");
+      });
+      
+      await logActivity('comment', content.id, content.title || content.name);
+      setNewComment("");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
   };
 
-  const handleLike = (commentId, isReply = false, parentId = null) => {
+  const handleLike = async (commentId, isReply = false, parentId = null) => {
     if (!currentUser) {
       setIsAuthModalOpen(true);
       return;
     }
 
-    const updateLikes = (items) => {
-      return items.map(item => {
-        if (item.id === commentId) {
-          return { ...item, likes: item.likes + 1 };
-        }
-        if (item.replies) {
-          return { ...item, replies: updateLikes(item.replies) };
-        }
-        return item;
-      });
-    };
+    if (isReply) return; 
 
-    setComments(updateLikes(comments));
+    const commentRef = doc(db, 'comments', commentId);
+    try {
+       const commentDoc = comments.find(c => c.id === commentId);
+       if (commentDoc) {
+         await updateDoc(commentRef, {
+           likes: (commentDoc.likes || 0) + 1
+         });
+       }
+    } catch (error) {
+       console.error("Error liking comment:", error);
+    }
   };
 
   const handleReply = (commentId, userName = null) => {
@@ -126,31 +179,28 @@ const Details = () => {
     setReplyText(userName ? `@${userName} ` : "");
   };
 
-  const submitReply = (commentId) => {
+  const submitReply = async (commentId) => {
     if (!replyText.trim()) return;
 
-    const updatedComments = comments.map(comment => {
-      if (comment.id === commentId) {
-        return {
-          ...comment,
-          replies: [
-            ...(comment.replies || []),
-            {
-              id: Date.now(),
-              user: currentUser.displayName || "User",
-              text: replyText,
-              time: "Just now",
-              likes: 0
-            }
-          ]
-        };
-      }
-      return comment;
-    });
+    try {
+      const commentRef = doc(db, 'comments', commentId);
+      await updateDoc(commentRef, {
+        replies: arrayUnion({
+          id: Date.now(),
+          userId: currentUser.uid,
+          user: currentUser.displayName || "User",
+          userPhoto: currentUser.photoURL,
+          text: replyText,
+          timestamp: new Date().toISOString(),
+          likes: 0
+        })
+      });
 
-    setComments(updatedComments);
-    setReplyingTo(null);
-    setReplyText("");
+      setReplyingTo(null);
+      setReplyText("");
+    } catch (error) {
+      console.error("Error replying:", error);
+    }
   };
 
   if (loading) return <div className="flex-center" style={{height: '100vh'}}>Loading...</div>;
@@ -317,7 +367,9 @@ const Details = () => {
             <div key={comment.id} className="comment-item glass-panel">
               <div className="comment-header">
                 <span className="user-name">{comment.user}</span>
-                <span className="comment-time">{comment.time}</span>
+                <span className="comment-time">
+                  {comment.timestamp?.toDate ? comment.timestamp.toDate().toLocaleDateString() : 'Just now'}
+                </span>
               </div>
               <p className="comment-text">{comment.text}</p>
               <div className="comment-actions">
@@ -336,7 +388,7 @@ const Details = () => {
                     <div key={reply.id} className="reply-item">
                       <div className="comment-header">
                         <span className="user-name">{reply.user}</span>
-                        <span className="comment-time">{reply.time}</span>
+                        <span className="comment-time">{reply.timestamp ? new Date(reply.timestamp).toLocaleDateString() : 'Just now'}</span>
                       </div>
                       <p className="comment-text">{reply.text}</p>
                       <div className="comment-actions">

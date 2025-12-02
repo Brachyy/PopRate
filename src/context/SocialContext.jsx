@@ -229,6 +229,53 @@ export const SocialProvider = ({ children }) => {
     }
   };
 
+  const searchUsers = async (searchTerm) => {
+    if (!searchTerm.trim()) return [];
+    try {
+      const q = query(
+        collection(db, 'users'),
+        where('displayName', '>=', searchTerm),
+        where('displayName', '<=', searchTerm + '\uf8ff'),
+        limit(5)
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return [];
+    }
+  };
+
+  const createDummyUser = async () => {
+    try {
+      const dummyId = 'dummy_user_' + Date.now();
+      await setDoc(doc(db, 'users', dummyId), {
+        displayName: "MovieBuff Test",
+        photoURL: null,
+        email: "dummy@test.com",
+        followers: [],
+        following: [],
+        createdAt: serverTimestamp()
+      });
+      
+      // Add some dummy activity
+      await addDoc(collection(db, 'activities'), {
+        userId: dummyId,
+        userName: "MovieBuff Test",
+        type: 'watch',
+        contentId: 550,
+        contentTitle: "Fight Club",
+        posterPath: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+        timestamp: serverTimestamp()
+      });
+
+      return "Dummy user created! Search for 'MovieBuff'.";
+    } catch (error) {
+      console.error("Error creating dummy user:", error);
+      return "Failed to create dummy user.";
+    }
+  };
+
   return (
     <SocialContext.Provider value={{
       following,
@@ -241,7 +288,9 @@ export const SocialProvider = ({ children }) => {
       logActivity,
       toggleGlobalLike,
       getGlobalLikes,
-      getMostLikedContent
+      getMostLikedContent,
+      searchUsers,
+      createDummyUser
     }}>
       {children}
     </SocialContext.Provider>

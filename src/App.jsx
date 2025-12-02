@@ -7,6 +7,7 @@ import Search from './pages/Search';
 import MyList from './pages/MyList';
 import Profile from './pages/Profile';
 import Feed from './pages/Feed';
+import UserProfile from './pages/UserProfile';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="search" element={<Search />} />
           <Route path="my-list" element={<MyList />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="profile/:userId" element={<UserProfile />} />
           <Route path="feed" element={<Feed />} />
         </Route>
       </Routes>
