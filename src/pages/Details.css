@@ -11,6 +11,7 @@
   display: flex;
   align-items: flex-end;
   padding-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
 }
 
 .details-overlay {
@@ -26,7 +27,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
 }
 
 .content-meta {
@@ -35,10 +36,12 @@
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-sm);
   font-weight: 600;
+  font-size: 1.1rem;
 }
 
 .match-score {
   color: #46d369;
+  font-weight: 700;
 }
 
 .quality {
@@ -50,10 +53,11 @@
 }
 
 .details-title {
-  font-size: 4.5rem;
+  font-size: 5rem;
   font-weight: 900;
   margin-bottom: var(--spacing-md);
   line-height: 1.1;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .details-actions {
@@ -74,11 +78,13 @@
   align-items: center;
   justify-content: center;
   transition: var(--transition-fast);
+  backdrop-filter: blur(5px);
 }
 
 .icon-btn-circle:hover {
   border-color: white;
   background: rgba(255,255,255,0.1);
+  transform: scale(1.1);
 }
 
 .icon-btn-circle.active {
@@ -95,21 +101,29 @@
 .details-description {
   font-size: 1.2rem;
   line-height: 1.6;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
   max-width: 700px;
   color: #e0e0e0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .details-info {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   gap: 8px;
+  background: rgba(0,0,0,0.5);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  max-width: 500px;
 }
 
 .details-info strong {
-  color: var(--text-secondary);
+  color: white;
+  margin-right: 8px;
 }
 
 /* Trailer Modal */

@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Details from './pages/Details';
 import Search from './pages/Search';
 import MyList from './pages/MyList';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -15,9 +16,7 @@ function App() {
           <Route path="details/:mediaType/:id" element={<Details />} />
           <Route path="search" element={<Search />} />
           <Route path="my-list" element={<MyList />} />
-          {/* Placeholder routes for now */}
-          <Route path="series" element={<div className="container" style={{paddingTop: '100px'}}>Series Page (Coming Soon)</div>} />
-          <Route path="movies" element={<div className="container" style={{paddingTop: '100px'}}>Movies Page (Coming Soon)</div>} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Routes>
     </Router>

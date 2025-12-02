@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Play, Plus, ThumbsUp, MessageSquare, Share2, Send, Check } from 'lucide-react';
+import { Play, Plus, ThumbsUp, MessageSquare, Share2, Send, Check, User } from 'lucide-react';
 import { getDetails, getImageUrl } from '../services/api';
 import { useList } from '../context/ListContext';
+import { useAuth } from '../context/AuthContext';
+import AuthModal from '../components/AuthModal';
 import './Details.css';
 
 const Details = () => {
@@ -10,6 +12,7 @@ const Details = () => {
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
   const { addToWatchlist, removeFromWatchlist, isInWatchlist, addToWatched, removeFromWatched, isInWatched } = useList();
+  const { currentUser } = useAuth();
   
   const [comments, setComments] = useState([
     { id: 1, user: "Alex", text: "This show is absolutely mind-blowing! The 80s vibes are perfect.", time: "2h ago", likes: 24 },
@@ -17,6 +20,7 @@ const Details = () => {
   ]);
   const [newComment, setNewComment] = useState("");
   const [showTrailer, setShowTrailer] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -39,8 +43,19 @@ const Details = () => {
     e.preventDefault();
     if (!newComment.trim()) return;
     
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
     setComments([
-      { id: Date.now(), user: "You", text: newComment, time: "Just now", likes: 0 },
+      { 
+        id: Date.now(), 
+        user: currentUser.displayName || "User", 
+        text: newComment, 
+        time: "Just now", 
+        likes: 0 
+      },
       ...comments
     ]);
     setNewComment("");
@@ -178,16 +193,25 @@ const Details = () => {
           <div className="input-wrapper">
             <input 
               type="text" 
-              placeholder="Add a comment..." 
+              placeholder={currentUser ? "Add a comment..." : "Log in to comment..."}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
+              disabled={!currentUser}
             />
             <button type="button" className="gif-btn">GIF</button>
           </div>
-          <button type="submit" className="send-btn" disabled={!newComment.trim()}>
-            <Send size={20} />
-          </button>
+          {currentUser ? (
+            <button type="submit" className="send-btn" disabled={!newComment.trim()}>
+              <Send size={20} />
+            </button>
+          ) : (
+            <button type="button" className="send-btn" onClick={() => setIsAuthModalOpen(true)}>
+              <User size={20} />
+            </button>
+          )}
         </form>
+        
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
         {/* Comments List */}
         <div className="comments-list">

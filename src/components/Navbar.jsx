@@ -1,88 +1,95 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Search, Bell, User, Menu, X } from "lucide-react";
-import "./Navbar.css";
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Search, Bell, Menu, X, User, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import AuthModal from './AuthModal';
+import './Navbar.css';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const location = useLocation();
+  const { currentUser, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      if (window.scrollY > 50) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Series", path: "/series" },
-    { name: "Movies", path: "/movies" },
-    { name: "My List", path: "/my-list" },
-  ];
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location]);
 
   return (
-    <nav className={`navbar ${isScrolled ? "scrolled" : ""}`}>
-      <div className="container navbar-content">
-        <div className="navbar-left">
-          <Link to="/" className="logo">
-            PopRate
-          </Link>
-          <div className="desktop-menu">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className={`nav-link ${
-                  location.pathname === link.path ? "active" : ""
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
+    <>
+      <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
+        <div className="navbar-container container">
+          <div className="navbar-left">
+            <Link to="/" className="logo">
+              Pop<span className="logo-accent">Rate</span>
+            </Link>
+            
+            <div className="desktop-menu">
+              <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Home</Link>
+              <Link to="/my-list" className={`nav-link ${location.pathname === '/my-list' ? 'active' : ''}`}>My List</Link>
+            </div>
+          </div>
+
+          <div className="navbar-right">
+            <Link to="/search" className="icon-btn" aria-label="Search">
+              <Search size={20} />
+            </Link>
+            
+            {currentUser ? (
+              <div className="user-menu">
+                <Link to="/profile" className="user-profile-link">
+                  {currentUser.photoURL ? (
+                    <img src={currentUser.photoURL} alt="Profile" className="user-avatar-small" />
+                  ) : (
+                    <div className="user-avatar-placeholder">
+                      {currentUser.displayName ? currentUser.displayName[0].toUpperCase() : 'U'}
+                    </div>
+                  )}
+                </Link>
+                <button className="icon-btn" onClick={logout} title="Logout">
+                  <LogOut size={20} />
+                </button>
+              </div>
+            ) : (
+              <button className="btn-primary login-btn" onClick={() => setIsAuthModalOpen(true)}>
+                Sign In
+              </button>
+            )}
+
+            <button className="icon-btn mobile-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
 
-        <div className="navbar-right">
-          <Link to="/search" className="icon-btn" aria-label="Search">
-            <Search size={20} />
-          </Link>
-          <button className="icon-btn" aria-label="Notifications">
-            <Bell size={20} />
-          </button>
-          <button className="icon-btn profile-btn" aria-label="Profile">
-            <User size={20} />
-          </button>
-          <button
-            className="mobile-menu-btn"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Menu"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+        {/* Mobile Menu */}
+        <div className={`mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
+          <Link to="/" className="mobile-link">Home</Link>
+          <Link to="/my-list" className="mobile-link">My List</Link>
+          {currentUser && <Link to="/profile" className="mobile-link">Profile</Link>}
+          {!currentUser && (
+            <button className="mobile-link" onClick={() => setIsAuthModalOpen(true)}>Sign In</button>
+          )}
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="mobile-menu glass-panel">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={`mobile-nav-link ${
-                location.pathname === link.path ? "active" : ""
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
-      )}
-    </nav>
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+    </>
   );
 };
 
