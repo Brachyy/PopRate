@@ -4,6 +4,7 @@ import { Play, Plus, ThumbsUp, MessageSquare, Share2, Send, Check, User } from '
 import { getDetails, getImageUrl } from '../services/api';
 import { useList } from '../context/ListContext';
 import { useAuth } from '../context/AuthContext';
+import { useSocial } from '../context/SocialContext';
 import AuthModal from '../components/AuthModal';
 import './Details.css';
 
@@ -21,35 +22,38 @@ const Details = () => {
   const [newComment, setNewComment] = useState("");
   const [showTrailer, setShowTrailer] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { toggleGlobalLike, getGlobalLikes } = useSocial();
+  const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  
-  // Reply state
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState("");
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        const data = await getDetails(mediaType || 'movie', id);
-        setContent(data);
-      } catch (error) {
-        console.error("Failed to fetch details", error);
-      } finally {
-        setLoading(false);
+    const fetchLikes = async () => {
+      if (content) {
+        const count = await getGlobalLikes(content.id);
+        setLikeCount(count);
+        // Check if user liked (optimization: this should ideally come from context or user data)
+        // For now we rely on local toggle state or re-fetching user data if needed
       }
     };
+    fetchLikes();
+  }, [content]);
 
-    if (id) {
-      fetchDetails();
-    }
-  }, [mediaType, id]);
-
-  const handleMainLike = () => {
+  const handleMainLike = async () => {
     if (!currentUser) {
       setIsAuthModalOpen(true);
       return;
     }
-    setIsLiked(!isLiked);
+    
+    // Optimistic update
+    const newLikedState = !isLiked;
+    setIsLiked(newLikedState);
+    setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
+
+    const success = await toggleGlobalLike(content.id, title, content.poster_path);
+    if (!success && newLikedState) {
+      // Revert if failed (or if it was an unlike action that returned false)
+       // logic depends on toggleGlobalLike return value
+    }
   };
 
   const handleShare = async () => {
@@ -235,8 +239,10 @@ const Details = () => {
               className={`icon-btn-circle ${isLiked ? 'active' : ''}`}
               onClick={handleMainLike}
               title={isLiked ? "Unlike" : "Like"}
+              style={{ width: 'auto', padding: '0 1rem', gap: '8px' }}
             >
               <ThumbsUp size={20} style={{ fill: isLiked ? 'currentColor' : 'none' }} />
+              <span>{likeCount > 0 ? likeCount : ''}</span>
             </button>
             <button className="icon-btn-circle" onClick={handleShare} title="Share">
               <Share2 size={20} />

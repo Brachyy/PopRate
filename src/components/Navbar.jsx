@@ -40,9 +40,10 @@ const Navbar = () => {
             </Link>
             
             <div className="desktop-menu">
-              <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Home</Link>
-              <Link to="/my-list" className={`nav-link ${location.pathname === '/my-list' ? 'active' : ''}`}>My List</Link>
-            </div>
+          <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Home</Link>
+          <Link to="/feed" className={`nav-link ${location.pathname === '/feed' ? 'active' : ''}`}>Feed</Link>
+          <Link to="/my-list" className={`nav-link ${location.pathname === '/my-list' ? 'active' : ''}`}>My List</Link>
+        </div>
           </div>
 
           <div className="navbar-right">

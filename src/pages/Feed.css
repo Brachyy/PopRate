@@ -1,0 +1,127 @@
+.feed-page {
+  padding-top: 120px;
+  min-height: 100vh;
+  max-width: 800px; /* Limit width for feed readability */
+}
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.feed-item {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-fast);
+}
+
+.feed-item:hover {
+  transform: translateY(-2px);
+}
+
+.feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.feed-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.feed-avatar, .feed-avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--glass-border);
+}
+
+.feed-avatar-placeholder {
+  background: var(--accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+}
+
+.feed-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-username {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.feed-action {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.feed-target {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.feed-time {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.feed-content-card {
+  display: flex;
+  gap: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.03);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.feed-content-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.feed-content-poster {
+  width: 60px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.feed-content-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.feed-content-title {
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.feed-content-type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.empty-feed-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-secondary);
+}

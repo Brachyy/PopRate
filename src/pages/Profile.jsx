@@ -1,20 +1,23 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useList } from '../context/ListContext';
-import { Settings, LogOut, Film, Clock, Heart } from 'lucide-react';
+import { useSocial } from '../context/SocialContext';
+import { Settings, LogOut, Film, Clock, Heart, Users, UserPlus } from 'lucide-react';
 import { getImageUrl } from '../services/api';
 import './Profile.css';
 
 const Profile = () => {
   const { currentUser, logout } = useAuth();
   const { watchlist, watched } = useList();
+  const { followers, following } = useSocial();
 
   if (!currentUser) return <div className="flex-center" style={{height: '100vh'}}>Please log in</div>;
 
   const stats = [
     { label: 'Watched', value: watched.length, icon: <Film size={20} /> },
     { label: 'Watchlist', value: watchlist.length, icon: <Clock size={20} /> },
-    { label: 'Favorites', value: 0, icon: <Heart size={20} /> },
+    { label: 'Followers', value: followers.length, icon: <Users size={20} /> },
+    { label: 'Following', value: following.length, icon: <UserPlus size={20} /> },
   ];
 
   return (
