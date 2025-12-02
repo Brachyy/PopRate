@@ -15,12 +15,16 @@ const Details = () => {
   const { currentUser } = useAuth();
   
   const [comments, setComments] = useState([
-    { id: 1, user: "Alex", text: "This show is absolutely mind-blowing! The 80s vibes are perfect.", time: "2h ago", likes: 24 },
-    { id: 2, user: "Sarah", text: "Can't wait for the next season!", time: "5h ago", likes: 12 },
+    { id: 1, user: "Alex", text: "This show is absolutely mind-blowing! The 80s vibes are perfect.", time: "2h ago", likes: 24, replies: [] },
+    { id: 2, user: "Sarah", text: "Can't wait for the next season!", time: "5h ago", likes: 12, replies: [] },
   ]);
   const [newComment, setNewComment] = useState("");
   const [showTrailer, setShowTrailer] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -54,11 +58,48 @@ const Details = () => {
         user: currentUser.displayName || "User", 
         text: newComment, 
         time: "Just now", 
-        likes: 0 
+        likes: 0,
+        replies: []
       },
       ...comments
     ]);
     setNewComment("");
+  };
+
+  const handleReply = (commentId) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setReplyingTo(commentId);
+    setReplyText("");
+  };
+
+  const submitReply = (commentId) => {
+    if (!replyText.trim()) return;
+
+    const updatedComments = comments.map(comment => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          replies: [
+            ...(comment.replies || []),
+            {
+              id: Date.now(),
+              user: currentUser.displayName || "User",
+              text: replyText,
+              time: "Just now",
+              likes: 0
+            }
+          ]
+        };
+      }
+      return comment;
+    });
+
+    setComments(updatedComments);
+    setReplyingTo(null);
+    setReplyText("");
   };
 
   if (loading) return <div className="flex-center" style={{height: '100vh'}}>Loading...</div>;
@@ -226,10 +267,43 @@ const Details = () => {
                 <button className="action-btn">
                   <ThumbsUp size={14} /> {comment.likes}
                 </button>
-                <button className="action-btn">
+                <button className="action-btn" onClick={() => handleReply(comment.id)}>
                   <MessageSquare size={14} /> Reply
                 </button>
               </div>
+
+              {/* Replies */}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="replies-list">
+                  {comment.replies.map(reply => (
+                    <div key={reply.id} className="reply-item">
+                      <div className="comment-header">
+                        <span className="user-name">{reply.user}</span>
+                        <span className="comment-time">{reply.time}</span>
+                      </div>
+                      <p className="comment-text">{reply.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Reply Input */}
+              {replyingTo === comment.id && (
+                <div className="reply-input-wrapper">
+                  <input
+                    type="text"
+                    placeholder="Write a reply..."
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    autoFocus
+                    className="reply-input"
+                  />
+                  <div className="reply-actions">
+                    <button className="btn-primary btn-sm" onClick={() => submitReply(comment.id)}>Send</button>
+                    <button className="btn-secondary btn-sm" onClick={() => setReplyingTo(null)}>Cancel</button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
