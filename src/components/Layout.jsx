@@ -1,14 +1,16 @@
 import React from 'react';
-import Navbar from './Navbar';
 import { Outlet } from 'react-router-dom';
+import Sidebar from './Sidebar';
+import BottomNav from './BottomNav';
 
 const Layout = () => {
   return (
     <div className="app-layout">
-      <Navbar />
-      <main>
+      <Sidebar />
+      <main className="main-content">
         <Outlet />
       </main>
+      <BottomNav />
     </div>
   );
 };

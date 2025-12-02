@@ -1,20 +1,22 @@
 .home-page {
   min-height: 100vh;
-  padding-bottom: var(--spacing-xl);
+  /* padding-bottom handled by layout */
 }
 
 /* Hero Section */
+/* Hero Section */
 .hero-section {
-  height: 85vh;
+  height: 70vh; /* Slightly shorter for modern look */
   width: 100%;
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   position: relative;
   display: flex;
-  align-items: center;
-  margin-bottom: -100px; /* Overlap with content */
-  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  align-items: flex-end; /* Align content to bottom */
+  padding-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
 
 .hero-overlay {
@@ -31,7 +33,7 @@
   position: relative;
   z-index: 10;
   max-width: 800px;
-  padding-top: 100px;
+  padding-bottom: var(--spacing-xl);
 }
 
 .hero-title {
@@ -41,6 +43,7 @@
   margin-bottom: var(--spacing-md);
   background: linear-gradient(to right, #fff, #ccc);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }

@@ -1,8 +1,8 @@
 .feed-page.container {
-  padding-top: 150px;
   min-height: 100vh;
   max-width: 800px; /* Limit width for feed readability */
   margin: 0 auto;
+  padding-top: var(--spacing-lg);
 }
 
 .feed-list {
