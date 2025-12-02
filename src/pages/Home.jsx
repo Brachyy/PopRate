@@ -106,9 +106,8 @@ const Home = () => {
                   className="card-image" 
                   loading="lazy"
                 />
-                <div className="card-overlay">
-                  <span className="rating-badge">★ {item.vote_average?.toFixed(1)}</span>
-                </div>
+                <div className="card-overlay"></div>
+                <span className="rating-badge">★ {item.vote_average?.toFixed(1)}</span>
               </div>
               <h3 className="card-title">{item.title || item.name}</h3>
             </Link>
@@ -130,10 +129,9 @@ const Home = () => {
                     className="card-image" 
                     loading="lazy"
                   />
-                  <div className="card-overlay">
-                    <div className="card-rating-badge" style={{display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(229, 9, 20, 0.8)', padding: '4px 8px', borderRadius: '4px'}}>
-                      <Heart size={12} fill="white" color="white" /> {item.likeCount}
-                    </div>
+                  <div className="card-overlay"></div>
+                  <div className="card-rating-badge" style={{display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(229, 9, 20, 0.9)', padding: '4px 8px', borderRadius: '4px', position: 'absolute', top: '10px', right: '10px', zIndex: 2}}>
+                    <Heart size={12} fill="white" color="white" /> {item.likeCount}
                   </div>
                 </div>
                 <h3 className="card-title">{item.title}</h3>
@@ -156,9 +154,8 @@ const Home = () => {
                   className="card-image" 
                   loading="lazy"
                 />
-                <div className="card-overlay">
-                  <span className="rating-badge">★ {item.vote_average?.toFixed(1)}</span>
-                </div>
+                <div className="card-overlay"></div>
+                <span className="rating-badge">★ {item.vote_average?.toFixed(1)}</span>
               </div>
               <h3 className="card-title">{item.title}</h3>
             </Link>

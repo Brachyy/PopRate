@@ -230,6 +230,21 @@
   font-weight: 600;
 }
 
+.rating-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fbbf24; /* Amber color for star */
+  z-index: 2;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 @media (max-width: 768px) {
   .hero-title {
     font-size: 3rem;
