@@ -8,10 +8,18 @@ import AuthModal from '../components/AuthModal';
 import './Profile.css';
 
 const Profile = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, syncProfile } = useAuth();
   const { watchlist, watched } = useList();
-  const { followers, following } = useSocial();
+  const { followers, following, getUserLikes } = useSocial();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('watched');
+  const [likedContent, setLikedContent] = useState([]);
+
+  React.useEffect(() => {
+    if (currentUser) {
+      getUserLikes(currentUser.uid).then(setLikedContent);
+    }
+  }, [currentUser]);
 
   if (!currentUser) {
     return (
@@ -41,7 +49,7 @@ const Profile = () => {
   const stats = [
     { label: 'Watched', value: watched.length, icon: <Film size={20} /> },
     { label: 'Hours', value: hoursWatched, icon: <Clock size={20} /> },
-    { label: 'Watchlist', value: watchlist.length, icon: <Clock size={20} /> },
+    { label: 'Likes', value: likedContent.length, icon: <Heart size={20} /> },
     { label: 'Followers', value: followers.length, icon: <Users size={20} /> },
     { label: 'Following', value: following.length, icon: <UserPlus size={20} /> },
   ];
@@ -74,8 +82,8 @@ const Profile = () => {
             </div>
           </div>
           <div className="profile-actions">
-            <button className="btn-secondary">
-              <Settings size={18} style={{marginRight: '8px'}} /> Settings
+            <button className="btn-secondary" onClick={syncProfile} title="Fix search visibility">
+              <Settings size={18} style={{marginRight: '8px'}} /> Sync Profile
             </button>
             <button className="btn-primary" onClick={logout}>
               <LogOut size={18} style={{marginRight: '8px'}} /> Logout
@@ -85,23 +93,68 @@ const Profile = () => {
       </div>
 
       <div className="profile-content">
-        <h2 className="section-title">Recently Watched</h2>
-        {watched.length > 0 ? (
-          <div className="content-grid">
-            {watched.slice(0, 5).map((item) => (
-              <div key={item.id} className="content-card">
-                <div className="card-image-wrapper">
-                  <img 
-                    src={getImageUrl(item.poster_path, 'w500')} 
-                    alt={item.title || item.name} 
-                    className="card-image" 
-                  />
-                </div>
+        <div className="profile-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+          <button 
+            className={`btn-secondary ${activeTab === 'watched' ? 'btn-primary' : ''}`}
+            onClick={() => setActiveTab('watched')}
+          >
+            Recently Watched
+          </button>
+          <button 
+            className={`btn-secondary ${activeTab === 'likes' ? 'btn-primary' : ''}`}
+            onClick={() => setActiveTab('likes')}
+          >
+            Liked Content
+          </button>
+        </div>
+
+        {activeTab === 'watched' && (
+          <>
+            {watched.length > 0 ? (
+              <div className="content-grid">
+                {watched.slice(0, 5).map((item) => (
+                  <div key={item.id} className="content-card">
+                    <div className="card-image-wrapper">
+                      <img 
+                        src={getImageUrl(item.poster_path, 'w500')} 
+                        alt={item.title || item.name} 
+                        className="card-image" 
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="empty-text">You haven't marked anything as watched yet.</p>
+            ) : (
+              <p className="empty-text">You haven't marked anything as watched yet.</p>
+            )}
+          </>
+        )}
+
+        {activeTab === 'likes' && (
+          <>
+            {likedContent.length > 0 ? (
+              <div className="content-grid">
+                {likedContent.map((item) => (
+                  <div key={item.id} className="content-card">
+                    <div className="card-image-wrapper">
+                      <img 
+                        src={getImageUrl(item.posterPath, 'w500')} 
+                        alt={item.title} 
+                        className="card-image" 
+                      />
+                      <div className="card-overlay"></div>
+                      <div className="card-rating-badge" style={{position: 'absolute', top: '10px', right: '10px', background: 'rgba(229, 9, 20, 0.9)', padding: '4px', borderRadius: '4px'}}>
+                        <Heart size={14} fill="white" color="white" />
+                      </div>
+                    </div>
+                    <h3 className="card-title">{item.title}</h3>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-text">You haven't liked any content yet.</p>
+            )}
+          </>
         )}
       </div>
     </div>

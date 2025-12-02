@@ -197,6 +197,8 @@ export const SocialProvider = ({ children }) => {
 
         await setDoc(userLikeRef, { 
           liked: true,
+          title: contentTitle,
+          posterPath: posterPath,
           timestamp: serverTimestamp() 
         });
 
@@ -206,6 +208,18 @@ export const SocialProvider = ({ children }) => {
     } catch (error) {
       console.error("Error toggling global like:", error);
       return false;
+    }
+  };
+
+  const getUserLikes = async (uid) => {
+    if (!uid) return [];
+    try {
+      const q = query(collection(db, 'users', uid, 'likes'), where('liked', '==', true), orderBy('timestamp', 'desc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error("Error fetching user likes:", error);
+      return [];
     }
   };
 
@@ -319,7 +333,8 @@ export const SocialProvider = ({ children }) => {
       getMostLikedContent,
       getBatchLikeCounts,
       searchUsers,
-      createDummyUser
+      createDummyUser,
+      getUserLikes
     }}>
       {children}
     </SocialContext.Provider>
