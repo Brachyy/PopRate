@@ -66,13 +66,35 @@ const Details = () => {
     setNewComment("");
   };
 
-  const handleReply = (commentId) => {
+  const handleLike = (commentId, isReply = false, parentId = null) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    const updateLikes = (items) => {
+      return items.map(item => {
+        if (item.id === commentId) {
+          // Toggle like (simplified logic: just add 1 for now, in real app would track user likes)
+          return { ...item, likes: item.likes + 1 };
+        }
+        if (item.replies) {
+          return { ...item, replies: updateLikes(item.replies) };
+        }
+        return item;
+      });
+    };
+
+    setComments(updateLikes(comments));
+  };
+
+  const handleReply = (commentId, userName = null) => {
     if (!currentUser) {
       setIsAuthModalOpen(true);
       return;
     }
     setReplyingTo(commentId);
-    setReplyText("");
+    setReplyText(userName ? `@${userName} ` : "");
   };
 
   const submitReply = (commentId) => {
@@ -264,7 +286,7 @@ const Details = () => {
               </div>
               <p className="comment-text">{comment.text}</p>
               <div className="comment-actions">
-                <button className="action-btn">
+                <button className="action-btn" onClick={() => handleLike(comment.id)}>
                   <ThumbsUp size={14} /> {comment.likes}
                 </button>
                 <button className="action-btn" onClick={() => handleReply(comment.id)}>
@@ -282,6 +304,14 @@ const Details = () => {
                         <span className="comment-time">{reply.time}</span>
                       </div>
                       <p className="comment-text">{reply.text}</p>
+                      <div className="comment-actions">
+                        <button className="action-btn" onClick={() => handleLike(reply.id, true, comment.id)}>
+                          <ThumbsUp size={12} /> {reply.likes}
+                        </button>
+                        <button className="action-btn" onClick={() => handleReply(comment.id, reply.user)}>
+                          <MessageSquare size={12} /> Reply
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

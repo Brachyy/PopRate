@@ -1,5 +1,5 @@
 .search-page {
-  padding-top: 100px;
+  padding-top: 120px; /* Account for fixed navbar */
   min-height: 100vh;
 }
 
