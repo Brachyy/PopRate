@@ -1,17 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useList } from '../context/ListContext';
 import { useSocial } from '../context/SocialContext';
-import { Settings, LogOut, Film, Clock, Heart, Users, UserPlus } from 'lucide-react';
+import { Settings, LogOut, Film, Clock, Heart, Users, UserPlus, LogIn } from 'lucide-react';
 import { getImageUrl } from '../services/api';
+import AuthModal from '../components/AuthModal';
 import './Profile.css';
 
 const Profile = () => {
   const { currentUser, logout } = useAuth();
   const { watchlist, watched } = useList();
   const { followers, following } = useSocial();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  if (!currentUser) return <div className="flex-center" style={{height: '100vh'}}>Please log in</div>;
+  if (!currentUser) {
+    return (
+      <div className="profile-page container flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '2rem' }}>
+        <div className="text-center">
+          <h1 className="page-title" style={{ marginBottom: '1rem' }}>Guest Profile</h1>
+          <p className="text-secondary" style={{ marginBottom: '2rem' }}>
+            Sign in to track your watched movies, create lists, and follow friends.
+          </p>
+          <button className="btn-primary" onClick={() => setIsAuthModalOpen(true)}>
+            <LogIn size={20} style={{ marginRight: '8px' }} /> Sign In / Register
+          </button>
+        </div>
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      </div>
+    );
+  }
 
   const stats = [
     { label: 'Watched', value: watched.length, icon: <Film size={20} /> },

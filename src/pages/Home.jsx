@@ -19,7 +19,7 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch critical TMDB data first
+        // 1. Fetch critical TMDB data first
         const [trending, topRated, upcoming] = await Promise.all([
           getTrending('all', 'week'),
           getTopRated('movie'),
@@ -30,32 +30,10 @@ const Home = () => {
         const topRatedSlice = topRated.slice(0, 10);
         const upcomingSlice = upcoming.slice(0, 10);
 
-        // Fetch likes for all these items
-        const allIds = [
-          ...trendingSlice.map(i => i.id),
-          ...topRatedSlice.map(i => i.id),
-          ...upcomingSlice.map(i => i.id)
-        ];
-        
-        // Remove duplicates
-        const uniqueIds = [...new Set(allIds)];
-        
-        let likesMap = {};
-        try {
-          likesMap = await getBatchLikeCounts(uniqueIds);
-        } catch (e) {
-          console.warn("Failed to fetch likes", e);
-        }
-
-        // Merge likes
-        const mergeLikes = (items) => items.map(item => ({
-          ...item,
-          likeCount: likesMap[item.id] || 0
-        }));
-
-        setTrendingContent(mergeLikes(trendingSlice));
-        setTopRatedContent(mergeLikes(topRatedSlice));
-        setUpcomingContent(mergeLikes(upcomingSlice));
+        // Set content immediately without likes
+        setTrendingContent(trendingSlice);
+        setTopRatedContent(topRatedSlice);
+        setUpcomingContent(upcomingSlice);
         
         // Pick a random item for the hero section
         if (trending.length > 0) {
@@ -63,9 +41,35 @@ const Home = () => {
           setFeatured(trending[random]);
         }
         
-        setLoading(false); // Stop loading as soon as main content is ready
+        setLoading(false); // <--- CRITICAL: Stop loading here!
 
-        // Fetch non-critical social data independently
+        // 2. Fetch likes in background
+        const allIds = [
+          ...trendingSlice.map(i => i.id),
+          ...topRatedSlice.map(i => i.id),
+          ...upcomingSlice.map(i => i.id)
+        ];
+        
+        const uniqueIds = [...new Set(allIds)];
+        
+        try {
+          const likesMap = await getBatchLikeCounts(uniqueIds);
+          
+          // Helper to merge likes
+          const mergeLikes = (items) => items.map(item => ({
+            ...item,
+            likeCount: likesMap[item.id] || 0
+          }));
+
+          // Update state with likes
+          setTrendingContent(prev => mergeLikes(prev));
+          setTopRatedContent(prev => mergeLikes(prev));
+          setUpcomingContent(prev => mergeLikes(prev));
+        } catch (e) {
+          console.warn("Failed to fetch likes in background", e);
+        }
+
+        // 3. Fetch most liked content independently
         try {
           const mostLikedData = await getMostLikedContent();
           setMostLiked(mostLikedData);
