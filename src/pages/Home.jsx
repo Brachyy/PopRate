@@ -19,26 +19,35 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [trending, topRated, upcoming, mostLikedData] = await Promise.all([
+        // Fetch critical TMDB data first
+        const [trending, topRated, upcoming] = await Promise.all([
           getTrending('all', 'week'),
           getTopRated('movie'),
-          getUpcoming(),
-          getMostLikedContent()
+          getUpcoming()
         ]);
         
         setTrendingContent(trending.results.slice(0, 10));
         setTopRatedContent(topRated.results.slice(0, 10));
         setUpcomingContent(upcoming.results.slice(0, 10));
-        setMostLiked(mostLikedData);
         
         // Pick a random item for the hero section
         if (trending.results.length > 0) {
           const random = Math.floor(Math.random() * 5);
           setFeatured(trending.results[random]);
         }
+        
+        setLoading(false); // Stop loading as soon as main content is ready
+
+        // Fetch non-critical social data independently
+        try {
+          const mostLikedData = await getMostLikedContent();
+          setMostLiked(mostLikedData);
+        } catch (socialError) {
+          console.warn("Could not fetch most liked content:", socialError);
+        }
+
       } catch (error) {
         console.error("Error fetching data:", error);
-      } finally {
         setLoading(false);
       }
     };
