@@ -14,7 +14,7 @@ const Home = () => {
   const [featured, setFeatured] = useState(null);
   const [loading, setLoading] = useState(true);
   const { addToWatchlist, isInWatchlist } = useList();
-  const { getMostLikedContent } = useSocial();
+  const { getMostLikedContent, getBatchLikeCounts } = useSocial();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,9 +26,36 @@ const Home = () => {
           getUpcoming()
         ]);
         
-        setTrendingContent(trending.slice(0, 10));
-        setTopRatedContent(topRated.slice(0, 10));
-        setUpcomingContent(upcoming.slice(0, 10));
+        const trendingSlice = trending.slice(0, 10);
+        const topRatedSlice = topRated.slice(0, 10);
+        const upcomingSlice = upcoming.slice(0, 10);
+
+        // Fetch likes for all these items
+        const allIds = [
+          ...trendingSlice.map(i => i.id),
+          ...topRatedSlice.map(i => i.id),
+          ...upcomingSlice.map(i => i.id)
+        ];
+        
+        // Remove duplicates
+        const uniqueIds = [...new Set(allIds)];
+        
+        let likesMap = {};
+        try {
+          likesMap = await getBatchLikeCounts(uniqueIds);
+        } catch (e) {
+          console.warn("Failed to fetch likes", e);
+        }
+
+        // Merge likes
+        const mergeLikes = (items) => items.map(item => ({
+          ...item,
+          likeCount: likesMap[item.id] || 0
+        }));
+
+        setTrendingContent(mergeLikes(trendingSlice));
+        setTopRatedContent(mergeLikes(topRatedSlice));
+        setUpcomingContent(mergeLikes(upcomingSlice));
         
         // Pick a random item for the hero section
         if (trending.length > 0) {
@@ -108,6 +135,11 @@ const Home = () => {
                 />
                 <div className="card-overlay"></div>
                 <span className="rating-badge">★ {item.vote_average?.toFixed(1)}</span>
+                {item.likeCount > 0 && (
+                  <span className="like-badge">
+                    <Heart size={10} fill="#e50914" color="#e50914" /> {item.likeCount}
+                  </span>
+                )}
               </div>
               <h3 className="card-title">{item.title || item.name}</h3>
             </Link>
@@ -156,6 +188,11 @@ const Home = () => {
                 />
                 <div className="card-overlay"></div>
                 <span className="rating-badge">★ {item.vote_average?.toFixed(1)}</span>
+                {item.likeCount > 0 && (
+                  <span className="like-badge">
+                    <Heart size={10} fill="#e50914" color="#e50914" /> {item.likeCount}
+                  </span>
+                )}
               </div>
               <h3 className="card-title">{item.title}</h3>
             </Link>

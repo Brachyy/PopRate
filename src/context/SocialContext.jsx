@@ -229,6 +229,33 @@ export const SocialProvider = ({ children }) => {
     }
   };
 
+  const getBatchLikeCounts = async (contentIds) => {
+    if (!contentIds || contentIds.length === 0) return {};
+    try {
+      // Firestore 'in' query is limited to 10, so we might need to chunk or just use individual gets for now if list is small
+      // For Home page rows (10 items), 'in' is fine if IDs are strings. 
+      // However, contentIds might be numbers.
+      const ids = contentIds.map(id => id.toString());
+      const chunks = [];
+      for (let i = 0; i < ids.length; i += 10) {
+        chunks.push(ids.slice(i, i + 10));
+      }
+
+      const results = {};
+      for (const chunk of chunks) {
+        const q = query(collection(db, 'content_stats'), where('__name__', 'in', chunk));
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+          results[doc.id] = doc.data().likeCount;
+        });
+      }
+      return results;
+    } catch (error) {
+      console.error("Error fetching batch likes:", error);
+      return {};
+    }
+  };
+
   const searchUsers = async (searchTerm) => {
     if (!searchTerm.trim()) return [];
     try {
@@ -289,6 +316,7 @@ export const SocialProvider = ({ children }) => {
       toggleGlobalLike,
       getGlobalLikes,
       getMostLikedContent,
+      getBatchLikeCounts,
       searchUsers,
       createDummyUser
     }}>

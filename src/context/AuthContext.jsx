@@ -7,7 +7,8 @@ import {
   signInWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { auth, googleProvider } from '../firebase';
+import { auth, googleProvider, db } from '../firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -20,6 +21,21 @@ export const AuthProvider = ({ children }) => {
   const signup = async (email, password, username) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: username });
+    
+    // Create user document in Firestore
+    try {
+      await setDoc(doc(db, 'users', result.user.uid), {
+        displayName: username,
+        email: email,
+        photoURL: result.user.photoURL,
+        createdAt: serverTimestamp(),
+        followers: [],
+        following: []
+      });
+    } catch (error) {
+      console.error("Error creating user document:", error);
+    }
+    
     return result;
   };
 
@@ -33,6 +49,22 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     return signOut(auth);
+  };
+
+  const syncProfile = async () => {
+    if (!currentUser) return;
+    try {
+      await setDoc(doc(db, 'users', currentUser.uid), {
+        displayName: currentUser.displayName,
+        email: currentUser.email,
+        photoURL: currentUser.photoURL,
+        lastSynced: serverTimestamp(),
+      }, { merge: true });
+      alert("Profile synced successfully!");
+    } catch (error) {
+      console.error("Error syncing profile:", error);
+      alert("Failed to sync profile.");
+    }
   };
 
   useEffect(() => {
@@ -49,7 +81,8 @@ export const AuthProvider = ({ children }) => {
     signup,
     login,
     loginWithGoogle,
-    logout
+    logout,
+    syncProfile
   };
 
   return (
