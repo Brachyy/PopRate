@@ -258,11 +258,12 @@ export const SocialProvider = ({ children }) => {
 
   const searchUsers = async (searchTerm) => {
     if (!searchTerm.trim()) return [];
+    const term = searchTerm.toLowerCase();
     try {
       const q = query(
         collection(db, 'users'),
-        where('displayName', '>=', searchTerm),
-        where('displayName', '<=', searchTerm + '\uf8ff'),
+        where('searchName', '>=', term),
+        where('searchName', '<=', term + '\uf8ff'),
         limit(5)
       );
       const querySnapshot = await getDocs(q);

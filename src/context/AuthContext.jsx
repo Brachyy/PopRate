@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }) => {
         displayName: username,
         email: email,
         photoURL: result.user.photoURL,
+        searchName: username.toLowerCase(),
         createdAt: serverTimestamp(),
         followers: [],
         following: []
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }) => {
         displayName: currentUser.displayName,
         email: currentUser.email,
         photoURL: currentUser.photoURL,
+        searchName: currentUser.displayName?.toLowerCase(),
         lastSynced: serverTimestamp(),
       }, { merge: true });
       alert("Profile synced successfully!");
@@ -66,6 +68,26 @@ export const AuthProvider = ({ children }) => {
       alert("Failed to sync profile.");
     }
   };
+
+  // Auto-sync profile on login/load
+  useEffect(() => {
+    if (currentUser) {
+      const autoSync = async () => {
+        try {
+          await setDoc(doc(db, 'users', currentUser.uid), {
+            displayName: currentUser.displayName,
+            email: currentUser.email,
+            photoURL: currentUser.photoURL,
+            searchName: currentUser.displayName?.toLowerCase(),
+            lastSynced: serverTimestamp(),
+          }, { merge: true });
+        } catch (error) {
+          console.error("Auto-sync failed:", error);
+        }
+      };
+      autoSync();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
