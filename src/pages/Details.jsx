@@ -16,6 +16,7 @@ const Details = () => {
     { id: 2, user: "Sarah", text: "Can't wait for the next season!", time: "5h ago", likes: 12 },
   ]);
   const [newComment, setNewComment] = useState("");
+  const [showTrailer, setShowTrailer] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -77,7 +78,6 @@ const Details = () => {
 
   const trailer = content.videos?.results?.find(v => v.type === "Trailer" && v.site === "YouTube");
   const similarContent = content.similar?.results?.filter(item => item.poster_path).slice(0, 6) || [];
-  const [showTrailer, setShowTrailer] = useState(false);
 
   return (
     <div className="details-page">
