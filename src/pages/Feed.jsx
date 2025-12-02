@@ -69,7 +69,7 @@ const Feed = () => {
           </button>
         </form>
 
-        {searchResults.length > 0 && (
+        {searchResults.length > 0 ? (
           <div className="user-results">
             {searchResults.map(user => (
               <div key={user.uid} className="user-result-item">
@@ -91,6 +91,10 @@ const Feed = () => {
               </div>
             ))}
           </div>
+        ) : (
+          searchTerm && !isSearching && searchResults.length === 0 && (
+             <div className="text-center text-secondary" style={{ marginTop: '1rem' }}>No users found.</div>
+          )
         )}
       </div>
       

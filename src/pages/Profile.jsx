@@ -30,8 +30,17 @@ const Profile = () => {
     );
   }
 
+  const totalRuntimeMinutes = watched.reduce((acc, item) => {
+    // runtime for movies, episode_run_time for TV (average)
+    const time = item.runtime || (item.episode_run_time && item.episode_run_time.length > 0 ? item.episode_run_time[0] : 0) || 0;
+    return acc + time;
+  }, 0);
+  
+  const hoursWatched = Math.floor(totalRuntimeMinutes / 60);
+
   const stats = [
     { label: 'Watched', value: watched.length, icon: <Film size={20} /> },
+    { label: 'Hours', value: hoursWatched, icon: <Clock size={20} /> },
     { label: 'Watchlist', value: watchlist.length, icon: <Clock size={20} /> },
     { label: 'Followers', value: followers.length, icon: <Users size={20} /> },
     { label: 'Following', value: following.length, icon: <UserPlus size={20} /> },

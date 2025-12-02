@@ -20,8 +20,9 @@
   display: flex;
   align-items: flex-end;
   gap: var(--spacing-lg);
-  margin-top: -60px;
+  margin-top: -75px; /* Adjusted to pull avatar up but keep text clear */
   flex-wrap: wrap;
+  position: relative;
 }
 
 .profile-avatar-wrapper {
@@ -56,6 +57,9 @@
   font-size: 2.5rem;
   font-weight: 800;
   margin-bottom: 4px;
+  position: relative;
+  z-index: 10;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Ensure readability against banner if it overlaps */
 }
 
 .profile-email {
