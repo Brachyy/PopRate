@@ -81,6 +81,17 @@
   background: rgba(255,255,255,0.1);
 }
 
+.icon-btn-circle.active {
+  background: white;
+  color: black;
+  border-color: white;
+}
+
+.btn-secondary.active {
+  background: white;
+  color: black;
+}
+
 .details-description {
   font-size: 1.2rem;
   line-height: 1.6;
@@ -99,6 +110,43 @@
 
 .details-info strong {
   color: var(--text-secondary);
+}
+
+/* Trailer Modal */
+.trailer-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trailer-content {
+  width: 90%;
+  max-width: 1000px;
+  aspect-ratio: 16/9;
+  position: relative;
+}
+
+.trailer-content iframe {
+  width: 100%;
+  height: 100%;
+}
+
+.close-btn {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  color: white;
+  font-size: 2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 /* Social Section */

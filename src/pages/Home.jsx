@@ -1,67 +1,102 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Info, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { getTrending, getTopRated, getUpcoming, getImageUrl } from '../services/api';
 import './Home.css';
 
 const Home = () => {
-  // Mock Data
-  const featuredContent = {
-    title: "Stranger Things",
-    description: "When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces, and one strange little girl.",
-    image: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop",
-    tags: ["Sci-Fi", "Horror", "Drama"]
-  };
+  const [featuredContent, setFeaturedContent] = useState(null);
+  const [trendingContent, setTrendingContent] = useState([]);
+  const [topRatedContent, setTopRatedContent] = useState([]);
+  const [upcomingContent, setUpcomingContent] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const trendingContent = [
-    { id: 1, title: "The Dark Knight", image: "https://images.unsplash.com/photo-1478720568477-152d9b164e63?q=80&w=500&auto=format&fit=crop", rating: 9.0 },
-    { id: 2, title: "Inception", image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=500&auto=format&fit=crop", rating: 8.8 },
-    { id: 3, title: "Interstellar", image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=500&auto=format&fit=crop", rating: 8.6 },
-    { id: 4, title: "Avengers: Endgame", image: "https://images.unsplash.com/photo-1560169856-c3042e9af583?q=80&w=500&auto=format&fit=crop", rating: 8.4 },
-    { id: 5, title: "The Matrix", image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=500&auto=format&fit=crop", rating: 8.7 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [trending, topRated, upcoming] = await Promise.all([
+          getTrending('all', 'week'),
+          getTopRated('movie'),
+          getUpcoming()
+        ]);
+        
+        setTrendingContent(trending);
+        setTopRatedContent(topRated);
+        setUpcomingContent(upcoming);
+        
+        // Pick a random item for the hero section
+        if (trending.length > 0) {
+          const randomItem = trending[Math.floor(Math.random() * trending.length)];
+          setFeaturedContent(randomItem);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="flex-center" style={{height: '100vh'}}>Loading...</div>;
+
+  const ContentRow = ({ title, data }) => (
+    <div className="section container">
+      <h2 className="section-title">{title}</h2>
+      <div className="content-grid">
+        {data.slice(0, 10).map((item) => (
+          <Link to={`/details/${item.media_type || 'movie'}/${item.id}`} key={item.id} className="content-card">
+            <div className="card-image-wrapper">
+              <img 
+                src={getImageUrl(item.poster_path, 'w500')} 
+                alt={item.title || item.name} 
+                className="card-image" 
+                loading="lazy"
+              />
+              <div className="card-overlay">
+                <div className="card-actions">
+                  <button className="icon-btn-small"><Play size={16} /></button>
+                  <button className="icon-btn-small"><Plus size={16} /></button>
+                </div>
+              </div>
+            </div>
+            <h3 className="card-title">{item.title || item.name}</h3>
+            <span className="card-rating">★ {item.vote_average?.toFixed(1)}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="home-page">
       {/* Hero Section */}
-      <div className="hero-section" style={{ backgroundImage: `url(${featuredContent.image})` }}>
-        <div className="hero-overlay"></div>
-        <div className="container hero-content">
-          <h1 className="hero-title">{featuredContent.title}</h1>
-          <p className="hero-description">{featuredContent.description}</p>
-          <div className="hero-tags">
-            {featuredContent.tags.map(tag => <span key={tag} className="tag">{tag}</span>)}
-          </div>
-          <div className="hero-actions">
-            <button className="btn-primary flex-center">
-              <Play size={20} style={{ marginRight: '8px', fill: 'currentColor' }} /> Play
-            </button>
-            <button className="btn-secondary flex-center">
-              <Info size={20} style={{ marginRight: '8px' }} /> More Info
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Trending Section */}
-      <div className="section container">
-        <h2 className="section-title">Trending Now</h2>
-        <div className="content-grid">
-          {trendingContent.map((item) => (
-            <div key={item.id} className="content-card">
-              <div className="card-image-wrapper">
-                <img src={item.image} alt={item.title} className="card-image" />
-                <div className="card-overlay">
-                  <div className="card-actions">
-                    <button className="icon-btn-small"><Play size={16} /></button>
-                    <button className="icon-btn-small"><Plus size={16} /></button>
-                  </div>
-                </div>
-              </div>
-              <h3 className="card-title">{item.title}</h3>
-              <span className="card-rating">★ {item.rating}</span>
+      {featuredContent && (
+        <div className="hero-section" style={{ backgroundImage: `url(${getImageUrl(featuredContent.backdrop_path)})` }}>
+          <div className="hero-overlay"></div>
+          <div className="container hero-content">
+            <h1 className="hero-title">{featuredContent.title || featuredContent.name}</h1>
+            <p className="hero-description">{featuredContent.overview}</p>
+            <div className="hero-tags">
+              <span className="tag">{featuredContent.media_type === 'tv' ? 'Series' : 'Movie'}</span>
+              <span className="tag">Trending</span>
             </div>
-          ))}
+            <div className="hero-actions">
+              <Link to={`/details/${featuredContent.media_type}/${featuredContent.id}`} className="btn-primary flex-center">
+                <Play size={20} style={{ marginRight: '8px', fill: 'currentColor' }} /> Play
+              </Link>
+              <Link to={`/details/${featuredContent.media_type}/${featuredContent.id}`} className="btn-secondary flex-center">
+                <Info size={20} style={{ marginRight: '8px' }} /> More Info
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      <ContentRow title="Trending Now" data={trendingContent} />
+      <ContentRow title="Top Rated Movies" data={topRatedContent} />
+      <ContentRow title="Upcoming Movies" data={upcomingContent} />
     </div>
   );
 };

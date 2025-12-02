@@ -46,9 +46,9 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-right">
-          <button className="icon-btn" aria-label="Search">
+          <Link to="/search" className="icon-btn" aria-label="Search">
             <Search size={20} />
-          </button>
+          </Link>
           <button className="icon-btn" aria-label="Notifications">
             <Bell size={20} />
           </button>
