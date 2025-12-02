@@ -1,0 +1,7 @@
+Le but de ce projet est de développer un site internet ainsi qu'une web app, donc compatible pc et mobile,
+permettant de suivre ses visualisations de contenu (film,series,livres,dessins-animés,jeux,etc)
+et de suivre les tendances de visualisations de contenu. Tout cela dans un style netflix primevideo dysney+ etc mais avec une touche personnel pour se démarquer 
+il y aura un coter social également, on doit pouvoir commenter un contenu chaque contenu à une section commentaire,
+on doit pouvoir ajouter des amis, pour suivre leur visualisation etc, on doit également pouvoir publier des gif dans les commentaires
+on aura une liste de contenu a voir, et liste de contenu vue, 
+on utilisera des api pour recuperer les informations des contenus(nom,auteur,réalisateur,synopsys,appartenance à une série ou un studio)
