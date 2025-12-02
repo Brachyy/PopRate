@@ -21,6 +21,7 @@ const Details = () => {
   const [newComment, setNewComment] = useState("");
   const [showTrailer, setShowTrailer] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
   
   // Reply state
   const [replyingTo, setReplyingTo] = useState(null);
@@ -42,6 +43,31 @@ const Details = () => {
       fetchDetails();
     }
   }, [mediaType, id]);
+
+  const handleMainLike = () => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsLiked(!isLiked);
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: content.title || content.name,
+          text: `Check out ${content.title || content.name} on PopRate!`,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    }
+  };
 
   const handleAddComment = (e) => {
     e.preventDefault();
@@ -75,7 +101,6 @@ const Details = () => {
     const updateLikes = (items) => {
       return items.map(item => {
         if (item.id === commentId) {
-          // Toggle like (simplified logic: just add 1 for now, in real app would track user likes)
           return { ...item, likes: item.likes + 1 };
         }
         if (item.replies) {
@@ -206,10 +231,14 @@ const Details = () => {
             >
               <Check size={20} style={{ opacity: inWatched ? 1 : 0.5 }} />
             </button>
-            <button className="icon-btn-circle">
-              <ThumbsUp size={20} />
+            <button 
+              className={`icon-btn-circle ${isLiked ? 'active' : ''}`}
+              onClick={handleMainLike}
+              title={isLiked ? "Unlike" : "Like"}
+            >
+              <ThumbsUp size={20} style={{ fill: isLiked ? 'currentColor' : 'none' }} />
             </button>
-            <button className="icon-btn-circle">
+            <button className="icon-btn-circle" onClick={handleShare} title="Share">
               <Share2 size={20} />
             </button>
           </div>
