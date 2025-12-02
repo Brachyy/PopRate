@@ -27,8 +27,13 @@ const Feed = () => {
   };
 
   const handleCreateDummy = async () => {
-    const msg = await createDummyUser();
-    alert(msg);
+    try {
+      const msg = await createDummyUser();
+      alert(msg);
+    } catch (error) {
+      console.error("Failed to create dummy user:", error);
+      alert("Error creating dummy user. Check console.");
+    }
   };
 
   if (!currentUser) {

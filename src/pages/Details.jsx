@@ -286,13 +286,13 @@ const Details = () => {
               <Check size={20} style={{ opacity: inWatched ? 1 : 0.5 }} />
             </button>
             <button 
-              className={`icon-btn-circle ${isLiked ? 'active' : ''}`}
+              className={`btn-secondary ${isLiked ? 'active' : ''}`}
               onClick={handleMainLike}
               title={isLiked ? "Unlike" : "Like"}
-              style={{ width: 'auto', padding: '0 1rem', gap: '8px' }}
+              style={{ gap: '8px', minWidth: '80px' }}
             >
               <ThumbsUp size={20} style={{ fill: isLiked ? 'currentColor' : 'none' }} />
-              <span>{likeCount > 0 ? likeCount : ''}</span>
+              <span>{likeCount > 0 ? likeCount : 'Like'}</span>
             </button>
             <button className="icon-btn-circle" onClick={handleShare} title="Share">
               <Share2 size={20} />
