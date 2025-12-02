@@ -26,14 +26,14 @@ const Home = () => {
           getUpcoming()
         ]);
         
-        setTrendingContent(trending.results.slice(0, 10));
-        setTopRatedContent(topRated.results.slice(0, 10));
-        setUpcomingContent(upcoming.results.slice(0, 10));
+        setTrendingContent(trending.slice(0, 10));
+        setTopRatedContent(topRated.slice(0, 10));
+        setUpcomingContent(upcoming.slice(0, 10));
         
         // Pick a random item for the hero section
-        if (trending.results.length > 0) {
+        if (trending.length > 0) {
           const random = Math.floor(Math.random() * 5);
-          setFeatured(trending.results[random]);
+          setFeatured(trending[random]);
         }
         
         setLoading(false); // Stop loading as soon as main content is ready
