@@ -21,9 +21,13 @@ const Feed = () => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
     setIsSearching(true);
-    const results = await searchUsers(searchTerm);
-    setSearchResults(results);
-    setIsSearching(false);
+    setSearchResults([]); // Clear previous results immediately
+    try {
+      const results = await searchUsers(searchTerm);
+      setSearchResults(results);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleCreateDummy = async () => {

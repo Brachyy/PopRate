@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useSocial } from '../context/SocialContext';
 import { useAuth } from '../context/AuthContext';
-import { Film, Heart, MessageSquare, UserPlus, Clock } from 'lucide-react';
+import { Film, Heart, MessageSquare, UserPlus, Clock, Users } from 'lucide-react';
 import { getImageUrl } from '../services/api';
 import './Profile.css'; // Reuse Profile styles
 
@@ -13,9 +13,10 @@ const UserProfile = () => {
   const { currentUser } = useAuth();
   const { followUser, unfollowUser, following } = useSocial();
   const [userProfile, setUserProfile] = useState(null);
-  const [stats, setStats] = useState({ watched: 0, likes: 0, comments: 0 });
+  const [stats, setStats] = useState({ watched: 0, likes: 0, comments: 0, followers: 0, following: 0 });
   const [recentLikes, setRecentLikes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('likes'); // Default to likes as it's more interesting usually
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -23,37 +24,27 @@ const UserProfile = () => {
         // Fetch User Doc
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (userDoc.exists()) {
-          setUserProfile(userDoc.data());
+          const userData = userDoc.data();
+          setUserProfile(userData);
+          
+          // Fetch Likes (from subcollection if possible, or activities)
+          // We'll try to fetch from the 'likes' subcollection first as it has poster/title
+          const likesRef = collection(db, 'users', userId, 'likes');
+          const qLikes = query(likesRef, where('liked', '==', true), orderBy('timestamp', 'desc'), limit(20));
+          const likeSnap = await getDocs(qLikes);
+          const likesData = likeSnap.docs.map(d => d.data());
+          
+          setRecentLikes(likesData);
+          
+          // Update stats
+          setStats({
+            watched: 0, // Placeholder as we can't easily read other's watched list in this simple schema without more rules
+            likes: likeSnap.size, // This is just the fetched batch size, ideally we'd have a counter
+            comments: 0,
+            followers: userData.followers?.length || 0,
+            following: userData.following?.length || 0
+          });
         }
-
-        // Fetch Stats (Approximate for this demo)
-        // In a real app, these should be aggregated counters on the user doc
-        
-        // Count watched (from a subcollection or array - assuming array 'watched' exists on user doc for simplicity in this demo, 
-        // though in ListContext we store it in a subcollection 'lists/watched/items'. 
-        // Accessing subcollections of other users requires permission rules. 
-        // For this demo, we'll assume we can read 'users/{uid}/lists/watched/items' if rules allow, 
-        // OR we just use the 'activities' collection to count 'watch' events.)
-        
-        const qWatch = query(collection(db, 'activities'), where('userId', '==', userId), where('type', '==', 'watch'));
-        const watchSnap = await getDocs(qWatch);
-        
-        const qLikes = query(collection(db, 'activities'), where('userId', '==', userId), where('type', '==', 'like'));
-        const likeSnap = await getDocs(qLikes);
-
-        const qComments = query(collection(db, 'activities'), where('userId', '==', userId), where('type', '==', 'comment'));
-        const commentSnap = await getDocs(qComments);
-
-        setStats({
-          watched: watchSnap.size,
-          likes: likeSnap.size,
-          comments: commentSnap.size
-        });
-
-        // Get recent likes for display
-        const recentLikesData = likeSnap.docs.slice(0, 5).map(d => d.data());
-        setRecentLikes(recentLikesData);
-
       } catch (error) {
         console.error("Error fetching user profile:", error);
       } finally {
@@ -72,85 +63,98 @@ const UserProfile = () => {
   const isFollowing = following.some(u => u.uid === userId);
   const isMe = currentUser?.uid === userId;
 
+  const displayStats = [
+    { label: 'Likes', value: recentLikes.length + (recentLikes.length === 20 ? '+' : ''), icon: <Heart size={20} /> },
+    { label: 'Followers', value: stats.followers, icon: <Users size={20} /> },
+    { label: 'Following', value: stats.following, icon: <UserPlus size={20} /> },
+  ];
+
   return (
     <div className="profile-page container">
       <div className="profile-header glass-panel">
+        <div className="profile-cover"></div>
         <div className="profile-info">
-          <div className="profile-avatar-large">
+          <div className="profile-avatar-wrapper">
             {userProfile.photoURL ? (
-              <img src={userProfile.photoURL} alt={userProfile.displayName} />
+              <img src={userProfile.photoURL} alt={userProfile.displayName} className="profile-avatar" />
             ) : (
-              <div className="avatar-placeholder-large">
+              <div className="profile-avatar-placeholder">
                 {userProfile.displayName?.[0]?.toUpperCase() || 'U'}
               </div>
             )}
           </div>
-          <div className="profile-text">
+          <div className="profile-details">
             <h1 className="profile-name">{userProfile.displayName}</h1>
             <p className="profile-email">Movie Enthusiast</p>
-            <div className="profile-stats-row">
-              <span><strong>{userProfile.followers?.length || 0}</strong> Followers</span>
-              <span><strong>{userProfile.following?.length || 0}</strong> Following</span>
+            <div className="profile-stats">
+              {displayStats.map((stat, index) => (
+                <div key={index} className="stat-item">
+                  <span className="stat-icon">{stat.icon}</span>
+                  <span className="stat-value">{stat.value}</span>
+                  <span className="stat-label">{stat.label}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-        
-        {!isMe && (
-          <button 
-            className={`btn-${isFollowing ? 'secondary' : 'primary'}`}
-            onClick={() => isFollowing 
-              ? unfollowUser(userId) 
-              : followUser(userId, userProfile.displayName, userProfile.photoURL)
-            }
-          >
-            {isFollowing ? 'Unfollow' : 'Follow'}
-          </button>
-        )}
-      </div>
-
-      <div className="stats-grid">
-        <div className="stat-card glass-panel">
-          <Film size={24} className="stat-icon" />
-          <div className="stat-value">{stats.watched}</div>
-          <div className="stat-label">Watched</div>
-        </div>
-        <div className="stat-card glass-panel">
-          <Heart size={24} className="stat-icon" />
-          <div className="stat-value">{stats.likes}</div>
-          <div className="stat-label">Likes</div>
-        </div>
-        <div className="stat-card glass-panel">
-          <MessageSquare size={24} className="stat-icon" />
-          <div className="stat-value">{stats.comments}</div>
-          <div className="stat-label">Comments</div>
-        </div>
-      </div>
-
-      {recentLikes.length > 0 && (
-        <div className="section">
-          <h2 className="section-title">Recently Liked</h2>
-          <div className="content-row">
-            {recentLikes.map((item, index) => (
-              <div key={index} className="content-card">
-                 {/* Note: Activity log might not have poster path for older activities, need to handle that */}
-                 {item.posterPath ? (
-                    <img 
-                      src={getImageUrl(item.posterPath, 'w200')} 
-                      alt={item.contentTitle} 
-                      className="card-image" 
-                      style={{height: '200px'}}
-                    />
-                 ) : (
-                   <div className="card-image-placeholder" style={{height: '200px'}}>
-                     <Film />
-                   </div>
-                 )}
-                 <h4 className="card-title" style={{fontSize: '0.9rem'}}>{item.contentTitle}</h4>
-              </div>
-            ))}
+          <div className="profile-actions">
+            {!isMe && (
+              <button 
+                className={`btn-${isFollowing ? 'secondary' : 'primary'}`}
+                onClick={() => isFollowing 
+                  ? unfollowUser(userId) 
+                  : followUser(userId, userProfile.displayName, userProfile.photoURL)
+                }
+              >
+                {isFollowing ? 'Unfollow' : 'Follow'}
+              </button>
+            )}
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="profile-content">
+        <div className="profile-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+          <button 
+            className={`btn-secondary ${activeTab === 'likes' ? 'btn-primary' : ''}`}
+            onClick={() => setActiveTab('likes')}
+          >
+            Liked Content
+          </button>
+        </div>
+
+        {activeTab === 'likes' && (
+          <>
+            {recentLikes.length > 0 ? (
+              <div className="content-grid">
+                {recentLikes.map((item, index) => (
+                  <div key={index} className="content-card">
+                    <div className="card-image-wrapper">
+                      {item.posterPath ? (
+                        <img 
+                          src={getImageUrl(item.posterPath, 'w500')} 
+                          alt={item.title} 
+                          className="card-image" 
+                        />
+                      ) : (
+                        <div className="card-image-placeholder flex-center" style={{background: '#333', height: '100%'}}>
+                          <Film size={40} />
+                        </div>
+                      )}
+                      <div className="card-overlay"></div>
+                      <div className="card-rating-badge" style={{position: 'absolute', top: '10px', right: '10px', background: 'rgba(229, 9, 20, 0.9)', padding: '4px', borderRadius: '4px'}}>
+                        <Heart size={14} fill="white" color="white" />
+                      </div>
+                    </div>
+                    <h3 className="card-title">{item.title || item.contentTitle}</h3>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-text">This user hasn't liked any content yet.</p>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

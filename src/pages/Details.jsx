@@ -27,7 +27,7 @@ const Details = () => {
   const [loading, setLoading] = useState(true);
   const { addToWatchlist, removeFromWatchlist, isInWatchlist, addToWatched, removeFromWatched, isInWatched } = useList();
   const { currentUser } = useAuth();
-  const { toggleGlobalLike, getGlobalLikes, logActivity } = useSocial();
+  const { toggleGlobalLike, getGlobalLikes, logActivity, checkIfUserLiked } = useSocial();
   
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -83,10 +83,15 @@ const Details = () => {
       if (content) {
         const count = await getGlobalLikes(content.id);
         setLikeCount(count);
+        
+        if (currentUser) {
+          const liked = await checkIfUserLiked(content.id);
+          setIsLiked(liked);
+        }
       }
     };
     fetchLikes();
-  }, [content]);
+  }, [content, currentUser]);
 
   const handleMainLike = async () => {
     if (!currentUser) {

@@ -211,6 +211,18 @@ export const SocialProvider = ({ children }) => {
     }
   };
 
+  const checkIfUserLiked = async (contentId) => {
+    if (!currentUser || !contentId) return false;
+    try {
+      const docRef = doc(db, 'users', currentUser.uid, 'likes', contentId.toString());
+      const docSnap = await getDoc(docRef);
+      return docSnap.exists() && docSnap.data().liked === true;
+    } catch (error) {
+      console.error("Error checking like status:", error);
+      return false;
+    }
+  };
+
   const getUserLikes = async (uid) => {
     if (!uid) return [];
     try {
@@ -334,7 +346,8 @@ export const SocialProvider = ({ children }) => {
       getBatchLikeCounts,
       searchUsers,
       createDummyUser,
-      getUserLikes
+      getUserLikes,
+      checkIfUserLiked
     }}>
       {children}
     </SocialContext.Provider>
