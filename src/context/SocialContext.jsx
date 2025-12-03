@@ -174,14 +174,15 @@ export const SocialProvider = ({ children }) => {
 
     try {
       const userLikeSnap = await getDoc(userLikeRef);
+      const isCurrentlyLiked = userLikeSnap.exists() && userLikeSnap.data().liked;
       
-      if (userLikeSnap.exists()) {
+      if (isCurrentlyLiked) {
         // Unlike
         await setDoc(statsRef, {
           likeCount: (await getDoc(statsRef)).data()?.likeCount - 1 || 0
         }, { merge: true });
         
-        await setDoc(userLikeRef, { liked: false }, { merge: true }); // Or delete doc
+        await setDoc(userLikeRef, { liked: false }, { merge: true });
         
         return false; // Not liked anymore
       } else {
